@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta content="email=no" name="format-detection">
+    <title>排行榜</title>
+    <link rel="stylesheet" href="lib/mui/css/mui.css">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="lib/mui/js/mui.min.js"></script>
+</head>
+<body>
+
+<!--在这里, main标签的意义仅仅是撑开盒子, 把subpage放在里面(不是真正放在里面, 是iframe形式)-->
+<main>
+
+    <div id="rule-view" class="zk-modal">
+        <div class="zk-modal-content">
+            <p class="content">
+            <h2 class="title">奖品设置</h2>
+            1, 第一名将荣膺“摩擦2016年度女王”称号，同时获赠📱iphone7一台！<br>
+            2, 第二名将会获赠小秘书送出的9999朵鲜花！<br>
+            3, 第三名将会获得小秘书送出的999朵鲜花！<br>
+            </p>
+            <p class="content bottom-para">
+            <h2 class="title">活动规则</h2>
+            1, 视频认证用户均可报名，点击“我要报名”立即参与！<br>
+            2, 报名成功的用户会出现在参选名单内。<br>
+            3, 每朵鲜花可以为女神点亮一次。<br>
+            4.奖品评选以此活动排名为唯一依据。<br>
+            5, 活动截止时间为2017年1月3日24点整。<br>
+            6, 有疑问请联系客服：028-65789575。<br>
+            </p>
+        </div>
+    </div>
+
+    <div id="pullrefresh" class="mui-content mui-scroll-wrapper zk-scroll-wrapper">
+        <div class="mui-scroll">
+            <canvas id="canvas" class="firework"></canvas>
+            <header class="mui-clearfix">
+                <div class="title-img">
+                    <img class="left" src="imgs/icon-star.jpg" alt="" width="40" height="40">
+                    <img class="right rotate" src="imgs/icon-star.jpg" alt="" width="25" height="25">
+                </div>
+                <div class="event-container mui-clearfix">
+                    <a class="btn-event float-left" href="javascript:;" id="btn-signup">立即报名</a>
+                    <a class="btn-event float-right" href="javascript:;" id="btn-rule">活动规则</a>
+                </div>
+                <div class="searchbar-container">
+                    <div class="wrapper">
+                        <img src="imgs/icon-search.png" alt="" width="20" height="20">
+                        <form action="" onsubmit="return false">
+                            <input id="search-bar" type="search" placeholder="输入摩擦ID或昵称 快速点亮">
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <!--数据列表-->
+            <ul id="list-container" class="mui-table-view mui-table-view-chevron list-container">
+                <!--<li class="rank-cell border-bottom">-->
+                <!--<div class="rank-num-view">2</div>-->
+                <!--<div class="user-avatar-view"></div>-->
+                <!--<div class="detail-container">-->
+                <!--<p class="nickname">三叶草</p>-->
+                <!--<p id="text" class="mocaID"><em></em>摩擦ID: 34444322</p>-->
+                <!--<p class="sign">个性签名: 世界上本没有路, 走的人多了, 就成为了路</p>-->
+                <!--</div>-->
+                <!--<div class="lighten-container">-->
+                <!--<p class="lighten-num">232</p>-->
+                <!--<a id="btn-lighten" href="javascript:;" class="btn-lighten" data-id="htet">点亮</a>-->
+                <!--</div>-->
+                <!--</li>-->
+            </ul>
+        </div>
+
+        <!--<div class="rank-cell border-bottom my-cell">-->
+        <!--<div class="rank-num-view">2</div>-->
+        <!--<div class="user-avatar-view"></div>-->
+        <!--<div class="detail-container">-->
+        <!--<p class="nickname">三叶草</p>-->
+        <!--<p id="text" class="mocaID"><em></em>摩擦ID: 34444322</p>-->
+        <!--<p class="sign">个性签名: 世界上本没有路, 走的人多了, 就成为了路</p>-->
+        <!--</div>-->
+        <!--<div class="lighten-container">-->
+        <!--<p class="lighten-num">232</p>-->
+        <!--<a id="btn-lighten" href="javascript:;" class="btn-lighten" data-id="htet">点亮</a>-->
+        <!--</div>-->
+        <!--</div>-->
+    </div>
+
+    <div id="popover" class="mui-popover popover mui-clearfix">
+        <div class="flower-num">
+            <a href="javascript:;" data-num="1">点亮1次</a>
+        </div>
+        <div class="flower-num">
+            <a href="javascript:;" data-num="11">点亮11次</a>
+        </div>
+        <div class="flower-num">
+            <a href="javascript:;" data-num="99">点亮99次</a>
+        </div>
+        <div class="flower-num">
+            <a href="javascript:;" data-num="520">点亮520次</a>
+        </div>
+    </div>
+
+    <div class="flower-drop">
+
+    </div>
+
+</main>
+
+<script src="js/zk-firework.js"></script>
+<script src="js/base.js"></script>
+<script>
+    var toUID = null,
+            toNickname = null,
+            fromUID = null,
+            authStatus = 0,
+            $tableView = $('.mui-table-view'),
+            hasSignup = false,
+            currentPage = 1,
+            myKeyword = '';
+
+    setupMUI();
+    /*自动刷新*/
+    mui.ready(function() {
+        requestNewData(true);
+        //mui('#pullrefresh').pullRefresh().pulldownLoading();
+    });
+
+    $().ready(function () {
+        bindRuleBtn();
+        setupUI();
+    });
+
+    function connectWebViewJavascriptBridge(callback) {
+        if (window.WebViewJavascriptBridge) {
+            callback(WebViewJavascriptBridge)
+        } else {
+            document.addEventListener('WebViewJavascriptBridgeReady', function() {
+                callback(WebViewJavascriptBridge)
+            }, false)
+        }
+    }
+    connectWebViewJavascriptBridge(function(bridge) {
+        bridge.init();
+
+//        $(function () {
+            bridge.callHandler('UserInfo', {}, function(d) {
+                if (typeof d == 'string') {
+                    d = JSON.parse(d);
+                }
+                console.log(d);
+                fromUID = d.uid;
+                authStatus = d.auth_status;
+                initData();
+            });
+//        })
+    });
+
+    function initData() {
+        getSignupState();
+        bindSendFlowerBtn();
+    }
+
+    /**
+     * 上拉下拉刷新 加载数据 更新页面
+     **/
+    function updateMineCell(oriModel) {
+        var p = {};
+        p.nick = oriModel.nickname;
+        p.avatar = oriModel.avatar;
+        p.uid = oriModel.uid;
+        p.sign = '个性签名: ' + oriModel.signature;
+        p.rankNum = oriModel.first_few;
+        p.receiveNum = oriModel.lighting;
+
+        updateCellWithModel(p,true);
+    }
+
+    function pullupRefresh() {
+        currentPage ++;
+        myKeyword = '';
+        requestNewData(false);
+    }
+
+    function pulldownRefresh() {
+        currentPage = 1;
+        myKeyword = '';
+        requestNewData(true);
+        if (hasSignup) {
+            $.ajax({
+                url: baseUlr + 'moca/NewYear/Ranking',
+                type: 'POST',
+                data: {
+                    keyword: fromUID,
+                    page: currentPage
+                },
+                success: function (d) {
+
+                    if (typeof d == 'string') {
+                        d = JSON.parse(d);
+                    }
+                    if (!d.data[0]) {
+                        return;
+                    }
+                    var oriModel = d.data[0];
+                    updateMineCell(oriModel);
+                }
+            });
+        }
+    }
+
+    function requestNewData(isPulldown) {
+        $.ajax({
+            url: baseUlr + 'moca/NewYear/Ranking',
+            type: 'POST',
+            data: {
+                keyword: myKeyword,
+                page: currentPage
+            },
+            success: function (d) {
+
+                !!isPulldown && $tableView.empty();
+
+                if (typeof d == 'string') {
+                    d = JSON.parse(d);
+                }
+
+                var dataList = [];
+
+                $.each(d.data, function (index, obj) {
+                    var p = {};
+                    p.nick = obj.nickname;
+                    p.avatar = obj.avatar;
+                    p.uid = obj.uid;
+                    p.sign = '个性签名: ' + obj.signature;
+                    p.rankNum = obj.first_few;
+                    p.receiveNum = obj.lighting;
+                    dataList.push(p);
+                });
+
+                updateUIWithDataList(dataList);
+                setTimeout(function () {
+
+                    isPulldown?mui('#pullrefresh').pullRefresh().endPulldownToRefresh()
+                              :mui('#pullrefresh').pullRefresh().endPullupToRefresh(false);
+                    //isPulldown && mui('#pullrefresh').pullRefresh().refresh(true);
+                }, 200);
+            },
+            error: function (data) {
+                mui('#pullrefresh').pullRefresh().endPulldownToRefresh(); //refresh completed
+                mui('#pullrefresh').pullRefresh().endPullupToRefresh(true); // true代表没有更多数据了
+            }
+        });
+    }
+
+    function bindEventForLightenBtn() {
+        var $elems = $('.btn-lighten');
+        $elems.each(function (index, obj) {
+            obj.addEventListener('tap', function () {
+                var to = $(obj).attr('data-id');
+                toNickname = $(obj).attr('data-nick');
+                toUID = to;
+                console.log(to);
+                mui('.mui-popover').popover('show', obj);
+            })
+        })
+    }
+
+    /**
+     * 更新UI页面
+     */
+    function updateUIWithDataList(dataList) {
+        for (var i = 0; i < dataList.length; i++) {
+
+            var model = dataList[i];
+
+            updateCellWithModel(model,false);
+        }
+        bindEventForLightenBtn();
+    }
+
+    function exchangeRankNumBg($view, rankNum) {
+        $view.empty();
+        rankNum == 1 && $view.css('background', 'url("imgs/icon-gold-medal.png") no-repeat top center / 53px 60px');
+        rankNum == 2 && $view.css('background', 'url("imgs/icon-silver-medal.png") no-repeat top center / 53px 60px');
+        rankNum == 3 && $view.css('background', 'url("imgs/icon-copper-medal.png") no-repeat top center / 53px 60px');
+    }
+
+    function updateCellWithModel(model, isMine) {
+        var $cell = $('<li class="rank-cell border-bottom"></li>');
+        var $rankNumView = $('<div class="rank-num-view">'+ model.rankNum +'</div>');
+        parseInt(model.rankNum) <= 3 && exchangeRankNumBg($rankNumView, parseInt(model.rankNum));
+
+        var $avatarView = $('<div class="user-avatar-view"></div>');
+        $avatarView.css({
+            'background': 'url('+ model.avatar +') no-repeat top center / 55px 55px',
+        });
+
+        var $detail = $('<div class="detail-container"></div>');
+        var $nick = $('<p class="nickname">'+ model.nick +'</p>');
+        var $mocaid = $('<p id="text" class="mocaID"><em></em>摩擦ID:'+ model.uid +'</p>');
+        var $sign = $('<p class="sign">'+ model.sign +'</p>');
+        $detail.append($nick).append($mocaid).append($sign);
+
+        var lightenView = $('<div class="lighten-container"></div>');
+        var lightenNum = $('<p class="lighten-num">'+ model.receiveNum +'</p>');
+        var lightenBtn = $('<a id="btn-lighten" href="javascript:;" class="btn-lighten" data-id="'+ model.uid +'" data-nick="'+ model.nick +'">点亮</a>');
+        lightenView.append(lightenNum).append(lightenBtn);
+
+        $cell.append($rankNumView).append($avatarView).append($detail).append(lightenView);
+        if (isMine) {
+
+            var oriMyCell = $('.zk-scroll-wrapper .my-cell');
+            if (oriMyCell.get(0)) {
+                oriMyCell.animate({
+                    'bottom': '-100px'
+                }, 180, function () {
+                    oriMyCell.remove();
+                });
+            }
+
+            $cell.addClass('my-cell').addClass('border-top').css({
+                'bottom': '-100px'
+            });
+            $('.zk-scroll-wrapper').append($cell);
+            $cell.delay(666).animate({
+                'bottom': 0
+            }, 250)
+        }
+        else {
+            $tableView.append($cell);
+        }
+    }
+
+    /**
+     * 点击搜索
+     */
+    $("body").keyup(function () {
+        if (event.which == 13){
+            startSearch();
+        }
+    });
+    $('#search-bar').on('input propertychange', function () {
+        startSearch();
+    });
+    function startSearch() {
+        var keyword = $('#search-bar').val();
+        myKeyword = keyword;
+        currentPage = 1;
+        requestNewData(true);
+    }
+
+    /**
+     * 初始化页面
+     */
+    function bindSendFlowerBtn() {
+        $('.flower-num a').each(function (index, obj) {
+            obj.addEventListener('tap', function () {
+                mui('.mui-popover').popover('hide');
+                var flowerNum = $(obj).attr('data-num');
+
+                if (fromUID == toUID) {
+                    mui.alert('自己不能给自己送花哦', '提示', '我知道了');
+                    return;
+                }
+
+                loading.show();
+                //alert('送花==>' + fromUID + '为' + toUID + '点亮' + flowerNum + '次');
+
+                // 发送请求送花
+                $.ajax({
+                    url: baseUlr + 'moca/NewYear/Flowers',
+                    type: 'POST',
+                    data: {
+                        uid: fromUID,
+                        to_uid: toUID,
+                        num: flowerNum
+                    },
+
+                    success: function (response) {
+                        loading.hide();
+                        if (typeof response == 'string') {
+                            response = JSON.parse(response);
+                        }
+
+                        if (response.result == 1) {
+                            var winInfo = response.data.win_alert_info;
+                            var hintStr = '您已经成功为'+ toNickname +'点亮'+ flowerNum +'次';
+                            mui.alert(hintStr, '提示', '好的');
+                            setTimeout(function () {
+                                if (!winInfo) {
+                                    return;
+                                }
+                                mui.alert(winInfo, '中奖啦!', '知道了');
+                                var $flowerDrop = $('.flower-drop');
+                                $flowerDrop.css('display', 'block').animate({
+                                    'top': '1000px'
+                                }, 2200, function () {
+                                    $flowerDrop.css({
+                                        'top': '-1000px',
+                                        'display': 'none',
+                                    });
+                                })
+                            }, 300);
+
+                            if (currentPage != 1) {
+                                mui('#pullrefresh').scroll().scrollTo(0,0,250);
+                                setTimeout(function () {
+                                    mui('#pullrefresh').pullRefresh().pulldownLoading();
+                                }, 250);
+                            }
+                            else {
+                                requestNewData(true);
+                            }
+
+                            console.log('送花成功==>' + fromUID + '为' + toUID + '点亮' + flowerNum + '次');
+                        }
+                        else {
+                            response.msg && mui.alert(response.msg, '提示', '好的');
+                        }
+                    },
+                    error: function (response) {
+                        loading.hide();
+                        if (typeof response == 'string') {
+                            response = JSON.parse(response);
+                        }
+                        response.msg && mui.alert(response.msg, '提示', '好的');
+                    }
+                });
+            });
+        });
+    }
+    function bindRuleBtn() {
+        var $ruleView = $('#rule-view');
+        var $modalContent = $('.zk-modal-content');
+        $('#btn-rule').get(0).addEventListener('tap', function () {
+            console.log('点击规则');
+            $ruleView.css('display', 'block');
+            $modalContent.removeClass('modal-out').addClass('modal-in');
+        });
+
+        $ruleView.get(0).addEventListener('tap', function () {
+            $modalContent.removeClass('modal-in').addClass('modal-out');
+            setTimeout(function () {
+                $ruleView.css('display', 'none');
+            }, 250);
+        });
+    }
+    function bindSignBtn() {
+        $('#btn-signup').get(0).addEventListener('tap', function () {
+
+            if (!fromUID) {
+                return false;
+            }
+            if (hasSignup) {
+                mui.alert('已经报名过, 无需重复报名! \n在排行榜底栏可以看到自己的排名信息', '提示', '我知道了');
+                return;
+            }
+            if (authStatus != 1) {
+                mui.alert('视频认证之后才可以参与活动呦~', '提示', '我知道了');
+                return;
+            }
+            console.log('点击报名');
+
+            loading.show();
+            setTimeout(function () {
+                $.ajax({
+                    url: baseUlr + 'moca/NewYear/Signup',
+                    type: 'POST',
+                    data: {
+                        uid: fromUID
+                    },
+                    success: function (response) {
+                        if (typeof response == 'string') {
+                            response = JSON.parse(response);
+                        }
+
+                        if (response.result == 1) {
+                            mui.alert('在排行榜底栏可以看到自己的排名信息', '报名成功!', '好的');
+                            updateMineCell(response.data);
+                        }
+                        else {
+                            var msgStr = typeof response.data === 'string' ? response.data : '报名失败, 请仔细查看报名规则';
+                            mui.alert(msgStr, '报名失败', '好的');
+                        }
+                    },
+                    complete: function () {
+                        loading.hide();
+                    }
+                })
+            }, 500);
+        });
+    }
+    function setupUI() {
+        var headerHeight = $('header').height();
+        $('#list-container').css({
+            'marginTop': headerHeight
+        });
+    }
+    function setupMUI() {
+        mui.init({
+            pullRefresh: {
+                container: '#pullrefresh',
+                down: {
+                    contentdown: '下拉刷新最新排行榜',
+                    callback: pulldownRefresh
+                },
+                up: {
+                    contentrefresh: '正在加载...',
+                    contentnomore: '已经加载全部排行榜数据',
+                    callback: pullupRefresh
+                }
+            },
+            gestureConfig:{
+                tap: true, //默认为true
+                doubletap: true, //默认为false
+                longtap: true, //默认为false
+                swipe: true, //默认为true
+                drag: true, //默认为true
+                hold:false,//默认为false，不监听
+                release:false//默认为false，不监听
+            }
+        });
+    }
+    function getSignupState() {
+        $.ajax({
+            url: baseUlr + 'moca/NewYear/GetSignup',
+            type: 'POST',
+            data: {
+                uid: fromUID
+            },
+            success: function (response) {
+                if (typeof response == 'string') {
+                    response = JSON.parse(response);
+                }
+
+                if (response.data.length == 0) {
+                    hasSignup = false;
+                }
+                else {
+                    hasSignup = true;
+                    // 如果已经报名 底部默认显示自己的排名信息
+                    var oriModel = response.data;
+                    updateMineCell(oriModel);
+                }
+                bindSignBtn();
+            },
+            error: function (response) {
+
+            }
+        })
+    }
+
+</script>
+
+</body>
+</html>
